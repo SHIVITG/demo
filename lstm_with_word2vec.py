@@ -18,8 +18,7 @@ from keras.layers.merge import concatenate
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-
-
+from sklearn.externals import joblib 
 # Global parameters
 EMBEDDING_FILE = 'pretrained_model/GoogleNews-vectors-negative300.bin' 
 TRAIN_DATA_FILE = 'data/dataset.csv'
@@ -84,7 +83,7 @@ def text_to_wordlist(text, remove_stopwords=False, stem_words=False):
         stemmer = SnowballStemmer('english')
         stemmed_words = [stemmer.stem(word) for word in text]
         text = " ".join(stemmed_words)
-    print("Text to wordlist received: ",text)
+    #print("Text to wordlist received: ",text)
     return(text)
 
 # reading the Dataset and splitting the sentences and outputs
@@ -175,6 +174,9 @@ model.compile(loss='binary_crossentropy',
 hist = model.fit([data_1_train, data_2_train], labels_train, \
         validation_data=([data_1_val, data_2_val], labels_val), \
         epochs=10, batch_size=2048, shuffle=True)
+joblib_file = "joblib_model.pkl"
+joblib.dump(model, joblib_file)
+
 
 #predicting and inferencing
 preds = model.predict([test_data_1, test_data_2])
@@ -205,6 +207,8 @@ test_2 = tokenizer.texts_to_sequences(test2)
 
 data_test_1 = pad_sequences(test_1, maxlen=MAX_SEQUENCE_LENGTH)
 data_test_2 = pad_sequences(test_2, maxlen=MAX_SEQUENCE_LENGTH)
-preds = model.predict([data_test_1, data_test_2])
+# Load from file
+joblib_model = joblib.load(joblib_file)
+preds = joblib_model.predict([data_test_1, data_test_2])
 end = time.time()
 print(end-start, preds)
